@@ -12,6 +12,7 @@ import { router } from './router.tsx';
 
 const theme = createTheme({
     palette: {
+        mode: 'dark',
         primary: {
             main: '#1976d2',
         },
