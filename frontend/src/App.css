@@ -4,8 +4,9 @@ html, body {
 }
 
 main {
-  background: black;
+  background: transparent;
   color: white;
+  z-index: 5;
 }
 
 .logo {

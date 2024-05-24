@@ -17,7 +17,8 @@ const Footer: React.FC = () => {
 };
 
 const StyledBox = styled(Box)`
-  background-color: black;
+    background-color: transparent;
+    z-index: 5;
 `;
 
 export default Footer;

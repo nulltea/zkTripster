@@ -29,8 +29,10 @@ const Header: React.FC = () => {
 
 
 const StyledAppBar = styled(AppBar)`
-    background-color: black;
+    background-color: transparent;
+    z-index: 5;
     background-image: none;
+    mix-blend-mode: difference;
 `;
 
 const StyledLink = styled(Link)<LinkProps & { component: React.ElementType, to?: string }>`
