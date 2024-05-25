@@ -6,10 +6,15 @@
 //! RUST_LOG=info cargo run --package fibonacci-script --bin prove --release
 //! ```
 
-use std::path::PathBuf;
+use std::{
+    ops::Add,
+    path::PathBuf,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
 use alloy_sol_types::{sol, SolType};
 use clap::Parser;
+use drand_core::chain::ChainInfo;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sp1_sdk::{HashableKey, ProverClient, SP1Stdin};
@@ -43,6 +48,14 @@ struct ProveArgs {
 "#
     )]
     blockchain_settings: String,
+
+    #[clap(
+        short,
+        long,
+        help = "disclose after (y/w/d/h/m/s/ms)",
+        default_value = "90d"
+    )]
+    pub duration: Option<humantime::Duration>,
 }
 
 /// A fixture that can be used to test the verification of SP1 zkVM proofs inside Solidity.
@@ -51,6 +64,12 @@ struct ProveArgs {
 struct SP1ZkPoExProofFixture {
     key: [u8; 32],
     nonce: [u8; 12],
+    round: u64,
+    before: String,
+    after: String,
+    hash_private_inputs: String,
+    chacha_cipher: Vec<u8>,
+    tlock_cipher: Vec<u8>,
     calldata: String,
     blockchain_settings: String,
     vkey: String,
@@ -68,6 +87,33 @@ fn main() {
     let key: [u8; 32] = rng.gen();
     let nonce: [u8; 12] = rng.gen();
 
+    let client: drand_core::HttpClient =
+        "https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493"
+            .try_into()
+            .unwrap();
+    let info = client.chain_info().unwrap();
+
+    let drand_master_key = info.public_key();
+
+    
+
+    let round = {
+        let d = args
+            .duration
+            .expect("duration is expected if round_number isn't specified")
+            .into();
+        round_after(&info, d)
+    };
+
+    let mut tlock_cipher = vec![];
+    tlock::encrypt(
+        &mut tlock_cipher,
+        &key[..],
+        &drand_master_key,
+        round,
+    )
+    .unwrap();
+
     // Setup the prover client.
     let client = ProverClient::new();
 
@@ -81,6 +127,8 @@ fn main() {
         nonce,
         args.calldata.clone(),
         args.blockchain_settings.clone(),
+        drand_master_key,
+        round,
     ));
 
     // Generate the proof.
@@ -94,10 +142,39 @@ fn main() {
     )
     .expect("failed to write fixture");
 
+    let (before, after, hash_private_inputs, chacha_cipher, _): (
+        String,
+        String,
+        String,
+        Vec<u8>,
+        String,
+        // Vec<u8>,
+        // u64,
+    ) = bincode::deserialize(proof.public_values.as_slice())
+        .expect("failed to deserialize public values");
+
+    std::fs::write(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("./zkpoex_chacha"),
+        &chacha_cipher,
+    )
+    .expect("failed to write fixture");
+
+    std::fs::write(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("./zkpoex_tlock"),
+        &tlock_cipher,
+    )
+    .expect("failed to write fixture");
+
     // Create the testing fixture so we can test things end-ot-end.
     let fixture = SP1ZkPoExProofFixture {
+        before,
+        after,
+        hash_private_inputs,
         key,
         nonce,
+        round,
+        chacha_cipher,
+        tlock_cipher,
         calldata: args.calldata,
         blockchain_settings: args.blockchain_settings,
         vkey: vk.bytes32().to_string(),
@@ -125,4 +202,41 @@ fn main() {
         serde_json::to_string_pretty(&fixture).unwrap(),
     )
     .expect("failed to write fixture");
+}
+
+pub fn round_at(chain_info: &ChainInfo, t: SystemTime) -> u64 {
+    let since_epoch = t.duration_since(UNIX_EPOCH).unwrap();
+    let t_unix = since_epoch.as_secs();
+    current_round(
+        t_unix,
+        Duration::from_secs(chain_info.period()),
+        chain_info.genesis_time(),
+    )
+}
+
+pub fn round_after(chain_info: &ChainInfo, d: Duration) -> u64 {
+    let t = SystemTime::now().add(d);
+    round_at(chain_info, t)
+}
+
+pub fn current_round(now: u64, period: Duration, genesis: u64) -> u64 {
+    let (next_round, _) = next_round(now, period, genesis);
+
+    if next_round <= 1 {
+        next_round
+    } else {
+        next_round - 1
+    }
+}
+
+pub fn next_round(now: u64, period: Duration, genesis: u64) -> (u64, u64) {
+    if now < genesis {
+        return (1, genesis);
+    }
+
+    let from_genesis = now - genesis;
+    let next_round = (((from_genesis as f64) / (period.as_secs() as f64)).floor() + 1f64) as u64;
+    let next_time = genesis + next_round * period.as_secs();
+
+    (next_round, next_time)
 }
