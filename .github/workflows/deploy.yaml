@@ -26,9 +26,12 @@ jobs:
       run:
         working-directory: ./frontend/
     permissions:
-      contents: read
+      contents: write
+      pages: write
       deployments: write
       id-token: write
+      repository-projects: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
