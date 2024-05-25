@@ -3,11 +3,10 @@ import {
     createWalletClient,
     custom,
     http,
-    toHex,
     parseAbiItem } from 'viem'
 import { sepolia } from 'viem/chains'
 
-import abi from '../data/PoEMarketplace_abi.json'
+import abi from '../../lib/PoEMarketplace_abi.json'
 
 const CONTRACT = process.env.CONTRACT_ADDRESS || '0x..'
 
