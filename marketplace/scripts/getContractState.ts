@@ -1,4 +1,4 @@
-require('dotenv').config()
+import dotenv from 'dotenv'
 import { GetStorageAtReturnType, createPublicClient, http, toHex } from 'viem'
 import { sepolia } from 'viem/chains'
 import fs from 'fs'
