@@ -1,0 +1,15 @@
+[workspace]
+[package]
+version = "0.1.0"
+name = "ecdh"
+edition = "2021"
+
+[dependencies]
+alloy-sol-types = "0.7.2"
+alloy-primitives = "0.7.2"
+sp1-zkvm = { git = "https://github.com/succinctlabs/sp1.git" }
+
+static-dh-ecdh = { path = "../../static-dh-ecdh" }
+chacha20 = "*"
+sha3 = { version = "0.10.6", default-features = false  }
+hex = { version = "0.4", default-features = false, features = [ "alloc" ]  }

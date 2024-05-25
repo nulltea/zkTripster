@@ -1,0 +1,25 @@
+[package]
+version = "0.1.0"
+name = "ecdh-script"
+edition = "2021"
+
+[[bin]]
+name = "prove"
+path = "src/bin/prove.rs"
+
+[[bin]]
+name = "artifacts"
+path = "src/bin/artifacts.rs"
+
+[dependencies]
+sp1-sdk = { git = "https://github.com/succinctlabs/sp1.git", rev = "v1.0.0-testnet" }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+clap = { version = "4.0", features = ["derive", "env"] }
+tracing = "0.1.40"
+alloy-sol-types = "0.7.2"
+hex = { version = "0.4", default-features = false, features = [ "alloc" ]  }
+rand = "*"
+
+[build-dependencies]
+sp1-helper = { git = "https://github.com/succinctlabs/sp1.git", rev = "277f1b4cfee5129bd40d74748f3d241cdfa56e63" }
