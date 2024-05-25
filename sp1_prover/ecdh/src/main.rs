@@ -17,9 +17,9 @@ use static_dh_ecdh::ecdh::ecdh::{FromBytes, KeyExchange, Pkk256, Skk256, ToBytes
 
 /// The public values encoded as a tuple that can be easily deserialized inside Solidity.
 sol! {
-    struct EcdhPublicInputs {
-        bytes32 key;
-        bytes ciphertext;
+    struct KeyEncOut {
+        bytes32 keyHash;
+        bytes keyCipher;
     }
 }
 
@@ -49,12 +49,12 @@ pub fn main() {
     hasher.update(key);
     let key_hash: [u8; 32] = hasher.finalize().to_vec().try_into().unwrap();
 
-    let out = EcdhPublicInputs {
-        key: key_hash.into(),
-        ciphertext: ciphertext.into(),
+    let out = KeyEncOut {
+        keyHash: key_hash.into(),
+        keyCipher: ciphertext.into(),
     };
 
-    let bytes = EcdhPublicInputs::abi_encode(&out);
+    let bytes = KeyEncOut::abi_encode(&out);
 
     // Commit to the public values of the program.
     sp1_zkvm::io::commit_slice(&bytes);
