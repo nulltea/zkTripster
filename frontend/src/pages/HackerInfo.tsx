@@ -18,7 +18,7 @@ const HackerInfo: React.FC = () => {
                     View GitHub Repository
                 </StyledButtonLink>
                 <Typography variant="h4" component="h1" gutterBottom>
-                    zkTripster: A Privacy-Focused Travel Platform
+                    zkTripster: Ethical Vulnerability Disclosure
                 </Typography>
                 <Typography variant="body1" paragraph>
                     zkTripster leverages zero-knowledge proofs (ZKPs) and verifiable time-lock encryption to enhance the
