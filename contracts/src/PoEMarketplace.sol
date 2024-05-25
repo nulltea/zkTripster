@@ -1,47 +1,40 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-
-import "./SP1Verifier.sol";
+import "../lib/@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { KeyEnc } from "./KeyEnc.sol";
 
 /**
  * @title ProofOfExploitMarketplace
+ * @author @qedric - https://warpcast.com/berlin
  * @dev A marketplace for white-hat hackers to sell proofs of exploits to 
- * smart contract stakeholders. 
+ * smart contract stakeholders.
  */
-contract ProofOfExploitMarketplace is ERC721 {
+contract ProofOfExploitMarketplace is ERC721, KeyEnc {
 
     struct Exploit {
-        address creator;
-        string description;
-        uint256 keyHash;
-        uint256 price;
-        bool redeemed;
-        Buyer buyer;
+        string description; // can by bytes for more efficient storage
+        address creator; // the creator of the exploit
+        address purchasedBy; // will be the address of the buyer of the token
+        uint256 price;  // price set by the creator
+        bytes32 keyHash; // the hash of the key of the encryption of the proof of the exploit
+        bytes sharedKeyCipher; // the encrypted key of the exploit, released by the redeeming process
+        bool redeemed; // true if this exploit has been redeemed and the sharedKeyCipher is available
     }
 
-    struct Buyer {
-        uint256[2] publicKey;
-        bool hasPurchased;
-    }
-
-    /// map of all exploits
+    /// map of all exploits (which are also tokens)
     mapping(uint256 => Exploit) public exploits;
-    /// map of token holders (buyers)
-    mapping(uint256 => address) public tokenOwners;
-    /// map of buyer information 
-    mapping(address => Buyer) public buyers;
 
-    /// keep track of our exploits to map them to tokens
+    /// keep track of our exploits (which are also tokens)
     uint256 public exploitCount;
-    
+
     event ExploitPosted(uint256 indexed id, address indexed creator, uint256 price);
     event TokenPurchased(uint256 indexed id, address indexed buyer);
     event ExploitRedeemed(uint256 indexed id, address indexed buyer);
 
-    constructor()
+    constructor(bytes32 _ecdhProgramVkey)
         ERC721("ProofOfExploitToken", "PET")
+        KeyEnc(_ecdhProgramVkey)
     {}
 
     /**
@@ -49,73 +42,71 @@ contract ProofOfExploitMarketplace is ERC721 {
      * @param description A description of the exploit.
      * @param price The price for the exploit.
      * @param keyHash The hash of the key of the encryption of the proof of the exploit.
-     * @return The ID of the newly created exploit.
+     * @return The ID of the newly created exploit (token).
      */
     function postExploit(
         string calldata description,
         uint256 price,
-        uint256 keyHash
+        bytes32 keyHash
     ) external returns (uint256) {
-        exploitCount++;
         uint256 id = exploitCount;
+        exploitCount++;
 
-        exploits[id] = Exploit
-        ({
-            creator: msg.sender,
+        exploits[id] = Exploit({
             description: description,
+            creator: msg.sender,
+            purchasedBy: address(0),
             price: price,
-            redeemed: false,
             keyHash: keyHash,
-            buyer: Buyer([uint256(0), uint256(0)], false)
+            sharedKeyCipher: new bytes(0),
+            redeemed: false
         });
+
+        _mint(msg.sender, id);
 
         emit ExploitPosted(id, msg.sender, price);
         return id;
     }
 
     /**
-     * @notice Purchases a token for a specific exploit.
+     * @notice Purchases a token for a specific exploit. the buyer's address is stored in the exploit
      * @param exploitId The ID of the exploit to purchase.
-     * @param publicKey The public key of the buyer.
      */
-    function purchaseToken(uint256 exploitId, uint256[2] calldata publicKey) external payable {
+    function purchaseToken(uint256 exploitId) external payable {
         Exploit storage exploit = exploits[exploitId];
         require(msg.value >= exploit.price, "Insufficient funds");
 
-        buyers[msg.sender] = Buyer({
-            publicKey: publicKey,
-            hasPurchased: true
-        });
+        _transfer(exploit.creator, msg.sender, exploitId);
 
-        tokenOwners[exploitId] = msg.sender;
-        _mint(msg.sender, exploitId);
+        exploit.purchasedBy = msg.sender;
 
         emit TokenPurchased(exploitId, msg.sender);
     }
 
     /**
-     * @notice Redeems a exploit by providing the encrypted key and preimage.
-     * @param tokenId The ID of the token.
-     * @param encryptedKey The encrypted key.
-     * @param preimage The preimage of the key hash.
+     * @notice Redeems an exploit by providing the encrypted key.
+     * @param tokenId The ID of the token (exploit).
+     * @param proof The proof of the exploit.
      */
-    function redeemexploit(uint256 tokenId, uint256 encryptedKey, uint256 preimage) external {
+    function redeemExploit(uint256 tokenId, bytes memory proof, bytes memory publicValues) external {
         // make sure the exploit exists:
-        require(tokenId > 0 && tokenId <= exploitCount, "Exploit does not exist");
+        require(tokenId >= 0 && tokenId < exploitCount, "Exploit does not exist");
         Exploit storage exploit = exploits[tokenId];
         require(exploit.creator == msg.sender, "Only the creator can redeem");
         require(!exploit.redeemed, "Exploit already redeemed");
 
-        //require(
-        //    Verifier.verifyEncryptionProof(a, b, c, input),
-        //    'DataMarketplaceCore/proof-invalid'
-        //);
+        /*
+            @param proof The encoded proof.
+            @param publicValues The encoded public values.
+            @param keyHashCommited The commited key hash.
+        */
+        bytes memory sharedKeyCipher = verifyKeyEncProof(proof, publicValues, exploit.keyHash);
 
         exploit.redeemed = true;
-        exploit.keyHash = encryptedKey;
+        exploit.sharedKeyCipher = sharedKeyCipher;
 
-        address buyer = tokenOwners[tokenId];
-        require(buyers[buyer].hasPurchased, "No buyer for this token");
+        address buyer = ownerOf(tokenId);
+        require(exploit.purchasedBy != address(0), "No buyer for this token");
 
         payable(exploit.creator).transfer(exploit.price);
 
@@ -124,15 +115,15 @@ contract ProofOfExploitMarketplace is ERC721 {
 
     /**
      * @notice Allows a token holder to retrieve the encrypted key for the exploit.
-     * @param tokenId The ID of the token.
+     * @param tokenId The ID of the token (exploit).
      * @return The encrypted key.
      */
-    function getexploitKey(uint256 tokenId) external view returns (uint256) {
+    function getExploitKey(uint256 tokenId) external view returns (bytes memory) {
         require(ownerOf(tokenId) == msg.sender, "Only the owner can get the key");
 
         Exploit storage exploit = exploits[tokenId];
         require(exploit.redeemed, "Exploit not redeemed yet");
 
-        return exploit.keyHash;
+        return exploit.sharedKeyCipher;
     }
 }
