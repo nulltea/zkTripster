@@ -3,12 +3,10 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-import "./Verifier.sol";
-
 /**
  * @title ProofOfExploitMarketplace
  * @dev A marketplace for white-hat hackers to sell proofs of exploits to 
- * smart contract stakeholders. 
+ * smart contract stakeholders.
  */
 contract ProofOfExploitMarketplace is ERC721 {
 
@@ -26,16 +24,15 @@ contract ProofOfExploitMarketplace is ERC721 {
         bool hasPurchased;
     }
 
-    /// map of all exploits
+    /// map of all exploits (which are also tokens)
     mapping(uint256 => Exploit) public exploits;
-    /// map of token holders (buyers)
-    mapping(uint256 => address) public tokenOwners;
+
     /// map of buyer information 
     mapping(address => Buyer) public buyers;
 
-    /// keep track of our exploits to map them to tokens
+    /// keep track of our exploits (which are also tokens)
     uint256 public exploitCount;
-    
+
     event ExploitPosted(uint256 indexed id, address indexed creator, uint256 price);
     event TokenPurchased(uint256 indexed id, address indexed buyer);
     event ExploitRedeemed(uint256 indexed id, address indexed buyer);
@@ -49,18 +46,17 @@ contract ProofOfExploitMarketplace is ERC721 {
      * @param description A description of the exploit.
      * @param price The price for the exploit.
      * @param keyHash The hash of the key of the encryption of the proof of the exploit.
-     * @return The ID of the newly created exploit.
+     * @return The ID of the newly created exploit (token).
      */
     function postExploit(
         string calldata description,
         uint256 price,
         uint256 keyHash
     ) external returns (uint256) {
-        exploitCount++;
         uint256 id = exploitCount;
+        exploitCount++;
 
-        exploits[id] = Exploit
-        ({
+        exploits[id] = Exploit({
             creator: msg.sender,
             description: description,
             price: price,
@@ -68,6 +64,8 @@ contract ProofOfExploitMarketplace is ERC721 {
             keyHash: keyHash,
             buyer: Buyer([uint256(0), uint256(0)], false)
         });
+
+        _mint(msg.sender, id);
 
         emit ExploitPosted(id, msg.sender, price);
         return id;
@@ -87,21 +85,21 @@ contract ProofOfExploitMarketplace is ERC721 {
             hasPurchased: true
         });
 
-        tokenOwners[exploitId] = msg.sender;
-        _mint(msg.sender, exploitId);
+        _transfer(exploit.creator, msg.sender, exploitId);
+
+        exploit.buyer = buyers[msg.sender];
 
         emit TokenPurchased(exploitId, msg.sender);
     }
 
     /**
-     * @notice Redeems a exploit by providing the encrypted key and preimage.
-     * @param tokenId The ID of the token.
+     * @notice Redeems an exploit by providing the encrypted key.
+     * @param tokenId The ID of the token (exploit).
      * @param encryptedKey The encrypted key.
-     * @param preimage The preimage of the key hash.
      */
-    function redeemexploit(uint256 tokenId, uint256 encryptedKey, uint256 preimage) external {
+    function redeemExploit(uint256 tokenId, uint256 encryptedKey) external {
         // make sure the exploit exists:
-        require(tokenId > 0 && tokenId <= exploitCount, "Exploit does not exist");
+        require(tokenId >= 0 && tokenId < exploitCount, "Exploit does not exist");
         Exploit storage exploit = exploits[tokenId];
         require(exploit.creator == msg.sender, "Only the creator can redeem");
         require(!exploit.redeemed, "Exploit already redeemed");
@@ -114,7 +112,7 @@ contract ProofOfExploitMarketplace is ERC721 {
         exploit.redeemed = true;
         exploit.keyHash = encryptedKey;
 
-        address buyer = tokenOwners[tokenId];
+        address buyer = ownerOf(tokenId);
         require(buyers[buyer].hasPurchased, "No buyer for this token");
 
         payable(exploit.creator).transfer(exploit.price);
@@ -124,10 +122,10 @@ contract ProofOfExploitMarketplace is ERC721 {
 
     /**
      * @notice Allows a token holder to retrieve the encrypted key for the exploit.
-     * @param tokenId The ID of the token.
+     * @param tokenId The ID of the token (exploit).
      * @return The encrypted key.
      */
-    function getexploitKey(uint256 tokenId) external view returns (uint256) {
+    function getExploitKey(uint256 tokenId) external view returns (uint256) {
         require(ownerOf(tokenId) == msg.sender, "Only the owner can get the key");
 
         Exploit storage exploit = exploits[tokenId];
