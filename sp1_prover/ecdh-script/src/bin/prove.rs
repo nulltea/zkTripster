@@ -6,7 +6,7 @@
 //! RUST_LOG=info cargo run --package fibonacci-script --bin prove --release
 //! ```
 
-use std::{fs, path::PathBuf};
+use std::{fs, io::Read, path::PathBuf};
 
 use alloy_sol_types::{sol, SolType};
 use clap::Parser;
@@ -33,12 +33,20 @@ struct ProveArgs {
 /// A fixture that can be used to test the verification of SP1 zkVM proofs inside Solidity.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct SP1FibonacciProofFixture {
+struct SP1EcdhProofFixture {
     local_sk: String,
     vendor_pk: String,
     vkey: String,
+    key_hash: String,
     public_values: String,
     proof: String,
+}
+
+sol! {
+    struct KeyEncOut {
+        bytes32 keyHash;
+        bytes keyCipher;
+    }
 }
 
 fn main() {
@@ -48,13 +56,18 @@ fn main() {
     // Parse the command line arguments.
     let args = ProveArgs::parse();
 
-    use static_dh_ecdh::ecdh::ecdh::{FromBytes, KeyExchange, Pkk256, Skk256, ToBytes, ECDHNISTK256};
+    use static_dh_ecdh::ecdh::ecdh::{
+        FromBytes, KeyExchange, Pkk256, Skk256, ToBytes, ECDHNISTK256,
+    };
 
-    let local_sk = ECDHNISTK256::generate_private_key([12; 32]).to_bytes().to_vec();
-
+    let local_sk = ECDHNISTK256::generate_private_key([12; 32])
+        .to_bytes()
+        .to_vec();
 
     let vendor_sk = ECDHNISTK256::generate_private_key([13; 32]);
-    let vendor_pk = ECDHNISTK256::generate_public_key(&vendor_sk).to_bytes().to_vec();
+    let vendor_pk = ECDHNISTK256::generate_public_key(&vendor_sk)
+        .to_bytes()
+        .to_vec();
 
     let local_sk_hex = hex::encode(&local_sk);
     let vendor_pk_hex = hex::encode(&vendor_pk);
@@ -69,7 +82,10 @@ fn main() {
 
     let nonce: [u8; 12] = rng.gen();
 
-    let key: [u8; 32] = fs::read("./data/zkpoex_enc_key").unwrap().try_into().unwrap();
+    let key: [u8; 32] = fs::read("./data/zkpoex_enc_key")
+        .unwrap()
+        .try_into()
+        .unwrap();
 
     // Setup the prover client.
     let client = ProverClient::new();
@@ -86,13 +102,22 @@ fn main() {
         .prove_groth16(&pk, stdin)
         .expect("failed to generate proof");
 
+    let KeyEncOut {
+        keyHash,
+        keyCipher,
+    } = KeyEncOut::abi_decode(proof.public_values.as_slice(), false).unwrap();
+
+    let key_hash = hex::encode(keyHash);
+    println!("Key Hash: {}", key_hash);
+
     // Create the testing fixture so we can test things end-ot-end.
-    let fixture = SP1FibonacciProofFixture {
+    let fixture = SP1EcdhProofFixture {
         local_sk: local_sk_hex,
         vendor_pk: vendor_pk_hex,
         vkey: vk.bytes32().to_string(),
         public_values: proof.public_values.bytes().to_string(),
         proof: proof.bytes().to_string(),
+        key_hash,
     };
 
     // The verification key is used to verify that the proof corresponds to the execution of the
@@ -115,7 +140,7 @@ fn main() {
     let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../fixtures");
     std::fs::create_dir_all(&fixture_path).expect("failed to create fixture path");
     std::fs::write(
-        fixture_path.join("fixture.json"),
+        fixture_path.join("ecdh_fixture.json"),
         serde_json::to_string_pretty(&fixture).unwrap(),
     )
     .expect("failed to write fixture");

@@ -7,6 +7,7 @@
 //! ```
 
 use std::{
+    fs,
     ops::Add,
     path::PathBuf,
     time::{Duration, SystemTime, UNIX_EPOCH},
@@ -128,6 +129,7 @@ fn main() {
         .prove_compressed(&pk, stdin)
         .expect("failed to generate proof");
 
+    let _ = fs::create_dir_all(PathBuf::from("./data"));
     std::fs::write(PathBuf::from("./data/zkpoex_enc_key"), key).expect("failed to write fixture");
 
     let (before, after, hash_private_inputs, chacha_cipher, _): (
