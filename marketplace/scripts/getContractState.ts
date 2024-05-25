@@ -1,23 +1,29 @@
 require('dotenv').config()
-import { ethers } from 'ethers'
+import { GetStorageAtReturnType, createPublicClient, http, toHex } from 'viem'
+import { sepolia } from 'viem/chains'
 import fs from 'fs'
 
-// Set up the provider with Infura using the environment variable
-const provider = new ethers.providers.JsonRpcProvider(`https://mainnet.infura.io/v3/${process.env.INFURA_ID}`);
-
-const contractAddress = '0xYourContractAddress';
+const publicClient = createPublicClient({ 
+    chain: sepolia,
+    transport: http()
+})
 
 async function getStorageAtSlot(target:string, slot:number) {
-    return await provider.getStorageAt(target, slot);
+    return await publicClient.getStorageAt({
+        address: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2',
+        slot: toHex(0)
+    })
 }
 
 async function fetchAndStoreContractState(target:string) {
     const slots = 100; // Number of storage slots to fetch. Adjust as needed.
-    const state = [];
+    const state: GetStorageAtReturnType[] = [];
 
     for (let slot = 0; slot < slots; slot++) {
-        const storage = await getStorageAtSlot(target, slot);
-        state.push(storage);
+        const storage:GetStorageAtReturnType = await getStorageAtSlot(target, slot)
+        if (storage) {
+            state.push(storage);
+        }
     }
 
     // Store the state in a JSON file
