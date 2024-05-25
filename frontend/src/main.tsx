@@ -4,11 +4,11 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 
 import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { RouterProvider } from 'react-router-dom';
-import { CssBaseline } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { router } from './router.tsx';
+import {createRoot} from 'react-dom/client';
+import {RouterProvider} from 'react-router-dom';
+import {CssBaseline} from '@mui/material';
+import {ThemeProvider, createTheme} from '@mui/material/styles';
+import {router} from './router.tsx';
 
 const theme = createTheme({
     palette: {
@@ -29,7 +29,7 @@ root.render(
     <React.StrictMode>
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <RouterProvider router={router} />
+                <RouterProvider router={router}/>
         </ThemeProvider>
     </React.StrictMode>
 );

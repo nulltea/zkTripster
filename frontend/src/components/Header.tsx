@@ -16,11 +16,11 @@ const Header: React.FC = () => {
                 <StyledLink component={RouterLink} to="/" color="inherit" underline="none" sx={{ marginRight: 2 }}>
                     Home
                 </StyledLink>
-                <StyledLink component={RouterLink} to="/submit" color="inherit" underline="none" sx={{ marginRight: 2 }}>
-                    Submit Form
+                <StyledLink component={RouterLink} to="/issue" color="inherit" underline="none" sx={{ marginRight: 2 }}>
+                    Issue
                 </StyledLink>
-                <StyledLink component={RouterLink} to="/validate" color="inherit" underline="none">
-                    Validate Proof
+                <StyledLink component={RouterLink} to="/hacker-info" color="inherit" underline="none">
+                    Hacker info
                 </StyledLink>
             </Toolbar>
         </StyledAppBar>
@@ -33,6 +33,7 @@ const StyledAppBar = styled(AppBar)`
     z-index: 5;
     background-image: none;
     mix-blend-mode: difference;
+    border-bottom: 1px solid white;
 `;
 
 const StyledLink = styled(Link)<LinkProps & { component: React.ElementType, to?: string }>`

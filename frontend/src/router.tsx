@@ -1,8 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom';
 import App from './App';
 import Home from './pages/Home';
-import SubmitForm from './pages/SubmitForm';
-import ValidateProof from './pages/ValidateProof';
+import IssueForm from './pages/IssueForm.tsx';
+import HackerInfo from './pages/HackerInfo.tsx';
 
 export const router = createBrowserRouter([
     {
@@ -14,12 +14,12 @@ export const router = createBrowserRouter([
                 element: <Home />,
             },
             {
-                path: 'submit',
-                element: <SubmitForm />,
+                path: 'issue',
+                element: <IssueForm />,
             },
             {
-                path: 'validate',
-                element: <ValidateProof />,
+                path: 'hacker-info',
+                element: <HackerInfo />,
             },
         ],
     },
