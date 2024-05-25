@@ -3,7 +3,6 @@ name: Frontend Deployment
 on:
   push:
     branches: ['main']
-    paths: ['./frontend/**/*']
 
 # Sets the GITHUB_TOKEN permissions to allow deployment to GitHub Pages
 permissions:
