@@ -12,7 +12,7 @@ use alloy_sol_types::{sol, SolType};
 use clap::Parser;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use sp1_sdk::{HashableKey, ProverClient, SP1Stdin};
+use sp1_sdk::{Groth16Proof, HashableKey, ProverClient, SP1Stdin};
 
 /// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
 ///
