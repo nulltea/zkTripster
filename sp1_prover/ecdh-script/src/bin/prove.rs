@@ -12,7 +12,7 @@ use alloy_sol_types::{sol, SolType};
 use clap::Parser;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use sp1_sdk::{HashableKey, ProverClient, SP1Stdin};
+use sp1_sdk::{Groth16Proof, HashableKey, ProverClient, SP1Stdin};
 
 /// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
 ///
@@ -23,11 +23,11 @@ pub const ECDH_ELF: &[u8] = include_bytes!("../../../ecdh/elf/riscv32im-succinct
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct ProveArgs {
-    #[clap(long)]
-    local_sk: String,
+    // #[clap(long)]
+    // local_sk: String,
 
-    #[clap(long)]
-    vendor_pk: String,
+    // #[clap(long)]
+    // vendor_pk: String,
 }
 
 /// A fixture that can be used to test the verification of SP1 zkVM proofs inside Solidity.
@@ -48,14 +48,28 @@ fn main() {
     // Parse the command line arguments.
     let args = ProveArgs::parse();
 
-    let local_sk = hex::decode(&args.local_sk).unwrap();
-    let vendor_pk = hex::decode(&args.vendor_pk).unwrap();
+    use static_dh_ecdh::ecdh::ecdh::{FromBytes, KeyExchange, Pkk256, Skk256, ToBytes, ECDHNISTK256};
+
+    let local_sk = ECDHNISTK256::generate_private_key([12; 32]).to_bytes().to_vec();
+
+
+    let vendor_sk = ECDHNISTK256::generate_private_key([13; 32]);
+    let vendor_pk = ECDHNISTK256::generate_public_key(&vendor_sk).to_bytes().to_vec();
+
+    let local_sk_hex = hex::encode(&local_sk);
+    let vendor_pk_hex = hex::encode(&vendor_pk);
+
+    println!("local sk: {}", local_sk_hex);
+    println!("vendor pk: {}", vendor_pk_hex);
+
+    // let local_sk = hex::decode(&args.local_sk).unwrap();
+    // let vendor_pk = hex::decode(&args.vendor_pk).unwrap();
 
     let mut rng = rand::thread_rng();
 
     let nonce: [u8; 12] = rng.gen();
 
-    let key: [u8; 32] = fs::read("./zkpoex_enc_key").unwrap().try_into().unwrap();
+    let key: [u8; 32] = fs::read("./data/zkpoex_enc_key").unwrap().try_into().unwrap();
 
     // Setup the prover client.
     let client = ProverClient::new();
@@ -74,8 +88,8 @@ fn main() {
 
     // Create the testing fixture so we can test things end-ot-end.
     let fixture = SP1FibonacciProofFixture {
-        local_sk: args.local_sk,
-        vendor_pk: args.vendor_pk,
+        local_sk: local_sk_hex,
+        vendor_pk: vendor_pk_hex,
         vkey: vk.bytes32().to_string(),
         public_values: proof.public_values.bytes().to_string(),
         proof: proof.bytes().to_string(),
