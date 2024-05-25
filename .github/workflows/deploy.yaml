@@ -2,8 +2,12 @@ name: Frontend Deployment
 
 on:
   push:
-    branches: [ 'main' ]
+    branches:
+      - main
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 
 # Sets the GITHUB_TOKEN permissions to allow deployment to GitHub Pages
 permissions:
