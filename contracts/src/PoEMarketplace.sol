@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-import "./Verifier.sol";
+import "./SP1Verifier.sol";
 
 /**
  * @title ProofOfExploitMarketplace
