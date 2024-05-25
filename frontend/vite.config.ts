@@ -8,4 +8,7 @@ export default defineConfig({
   server: {
     open: true,
   },
+  resolve: {
+    preserveSymlinks: true
+  }
 })
