@@ -15,8 +15,8 @@ use evm_runner::{run_simulation, RunEvmResult};
 use sha3::{Digest, Keccak256};
 
 pub fn main() {
-    let (key, nonce, calldata, blockchain_settings) =
-        sp1_zkvm::io::read::<([u8; 32], [u8; 12], String, String)>();
+    let (key, nonce, calldata, blockchain_settings, drand_master_pk, round) =
+        sp1_zkvm::io::read::<([u8; 32], [u8; 12], String, String, Vec<u8>, u64)>();
 
     let RunEvmResult {
         before,
@@ -27,11 +27,18 @@ pub fn main() {
 
     let mut cipher = ChaCha20::new(&key.into(), &nonce.into());
 
-    let mut buffer = private_inputs_concat.as_bytes().to_vec();
+    let mut chacha_cipher = private_inputs_concat.as_bytes().to_vec();
 
-    cipher.apply_keystream(&mut buffer);
+    cipher.apply_keystream(&mut chacha_cipher);
 
-    let ciphertext = hex::encode(buffer.clone());
+    // let mut tlock_cipher = vec![];
+    // tlock::encrypt(
+    //     &mut tlock_cipher,
+    //     &key[..],
+    //     &drand_master_pk,
+    //     round,
+    // )
+    // .unwrap();
 
     let mut hasher = Keccak256::new();
     hasher.update(key);
@@ -39,5 +46,13 @@ pub fn main() {
     let key_hash_str = hex::encode(key_hash);
 
     // Commit to the public values of the program.
-    sp1_zkvm::io::commit(&[before, after, hash_private_inputs, ciphertext, key_hash_str]);
+    sp1_zkvm::io::commit(&(
+        before,
+        after,
+        hash_private_inputs,
+        chacha_cipher,
+        key_hash_str,
+        // tlock_cipher,
+        // round,
+    ));
 }

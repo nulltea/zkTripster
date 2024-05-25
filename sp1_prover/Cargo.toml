@@ -1,4 +1,4 @@
 [workspace]
 exclude = ["zkpoex", "ecdh"]
-members = ["zkpoex-script", "ecdh-script","evm-runner"]
+members = ["zkpoex-script", "ecdh-script", "evm-runner"]
 resolver = "2"

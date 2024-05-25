@@ -11,3 +11,5 @@ evm-runner = { path = "../evm-runner" }
 chacha20 = "*"
 sha3 = { version = "0.10.6", default-features = false  }
 hex = { version = "0.4", default-features = false, features = [ "alloc" ]  }
+tlock = "*"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
