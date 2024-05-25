@@ -1,0 +1,13 @@
+[workspace]
+[package]
+version = "0.1.0"
+name = "bid-server"
+edition = "2021"
+
+
+[dependencies]
+rocket = "0.5.1"
+cli-batteries = "0.5"
+
+[build-dependencies]
+cli-batteries = "0.5"
