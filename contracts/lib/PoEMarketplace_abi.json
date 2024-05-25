@@ -1,8 +1,19 @@
 [
 	{
-		"inputs": [],
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_ecdhProgramVkey",
+				"type": "bytes32"
+			}
+		],
 		"stateMutability": "nonpayable",
 		"type": "constructor"
+	},
+	{
+		"inputs": [],
+		"name": "CommitmentInvalid",
+		"type": "error"
 	},
 	{
 		"inputs": [
@@ -105,6 +116,16 @@
 			}
 		],
 		"name": "ERC721NonexistentToken",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ProofInvalid",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "PublicInputNotInField",
 		"type": "error"
 	},
 	{
@@ -285,17 +306,79 @@
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
+				"internalType": "uint256[8]",
+				"name": "proof",
+				"type": "uint256[8]"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "commitments",
+				"type": "uint256[2]"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "commitmentPok",
+				"type": "uint256[2]"
 			}
 		],
-		"name": "buyers",
+		"name": "compressProof",
 		"outputs": [
 			{
-				"internalType": "bool",
-				"name": "hasPurchased",
-				"type": "bool"
+				"internalType": "uint256[4]",
+				"name": "compressed",
+				"type": "uint256[4]"
+			},
+			{
+				"internalType": "uint256[1]",
+				"name": "compressedCommitments",
+				"type": "uint256[1]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "compressedCommitmentPok",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "proofBytes",
+				"type": "bytes"
+			}
+		],
+		"name": "deserializeProof",
+		"outputs": [
+			{
+				"internalType": "uint256[8]",
+				"name": "proof",
+				"type": "uint256[8]"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "commitments",
+				"type": "uint256[2]"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "commitmentPok",
+				"type": "uint256[2]"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "ecdhProgramVkey",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
 			}
 		],
 		"stateMutability": "view",
@@ -325,19 +408,19 @@
 		"name": "exploits",
 		"outputs": [
 			{
-				"internalType": "address",
-				"name": "creator",
-				"type": "address"
-			},
-			{
 				"internalType": "string",
 				"name": "description",
 				"type": "string"
 			},
 			{
-				"internalType": "uint256",
-				"name": "keyHash",
-				"type": "uint256"
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "purchasedBy",
+				"type": "address"
 			},
 			{
 				"internalType": "uint256",
@@ -345,26 +428,19 @@
 				"type": "uint256"
 			},
 			{
+				"internalType": "bytes32",
+				"name": "keyHash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes",
+				"name": "sharedKeyCipher",
+				"type": "bytes"
+			},
+			{
 				"internalType": "bool",
 				"name": "redeemed",
 				"type": "bool"
-			},
-			{
-				"components": [
-					{
-						"internalType": "uint256[2]",
-						"name": "publicKey",
-						"type": "uint256[2]"
-					},
-					{
-						"internalType": "bool",
-						"name": "hasPurchased",
-						"type": "bool"
-					}
-				],
-				"internalType": "struct ProofOfExploitMarketplace.Buyer",
-				"name": "buyer",
-				"type": "tuple"
 			}
 		],
 		"stateMutability": "view",
@@ -400,12 +476,31 @@
 		"name": "getExploitKey",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "bytes",
 				"name": "",
-				"type": "uint256"
+				"type": "bytes"
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "publicValues",
+				"type": "bytes"
+			}
+		],
+		"name": "hashPublicValues",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
@@ -477,9 +572,9 @@
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "bytes32",
 				"name": "keyHash",
-				"type": "uint256"
+				"type": "bytes32"
 			}
 		],
 		"name": "postExploit",
@@ -499,11 +594,6 @@
 				"internalType": "uint256",
 				"name": "exploitId",
 				"type": "uint256"
-			},
-			{
-				"internalType": "uint256[2]",
-				"name": "publicKey",
-				"type": "uint256[2]"
 			}
 		],
 		"name": "purchaseToken",
@@ -519,9 +609,14 @@
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint256",
-				"name": "encryptedKey",
-				"type": "uint256"
+				"internalType": "bytes",
+				"name": "proof",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes",
+				"name": "publicValues",
+				"type": "bytes"
 			}
 		],
 		"name": "redeemExploit",
@@ -670,6 +765,114 @@
 		"name": "transferFrom",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[4]",
+				"name": "compressedProof",
+				"type": "uint256[4]"
+			},
+			{
+				"internalType": "uint256[1]",
+				"name": "compressedCommitments",
+				"type": "uint256[1]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "compressedCommitmentPok",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "input",
+				"type": "uint256[2]"
+			}
+		],
+		"name": "verifyCompressedProof",
+		"outputs": [],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "proof",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes",
+				"name": "publicValues",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "keyHashCommited",
+				"type": "bytes32"
+			}
+		],
+		"name": "verifyKeyEncProof",
+		"outputs": [
+			{
+				"internalType": "bytes",
+				"name": "",
+				"type": "bytes"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "vkey",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes",
+				"name": "publicValues",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes",
+				"name": "proofBytes",
+				"type": "bytes"
+			}
+		],
+		"name": "verifyProof",
+		"outputs": [],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[8]",
+				"name": "proof",
+				"type": "uint256[8]"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "commitments",
+				"type": "uint256[2]"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "commitmentPok",
+				"type": "uint256[2]"
+			},
+			{
+				"internalType": "uint256[2]",
+				"name": "input",
+				"type": "uint256[2]"
+			}
+		],
+		"name": "verifyProof",
+		"outputs": [],
+		"stateMutability": "view",
 		"type": "function"
 	}
 ]
