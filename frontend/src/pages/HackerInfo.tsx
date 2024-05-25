@@ -58,9 +58,9 @@ const HackerInfo: React.FC = () => {
                 </Typography>
                 <Typography variant="body1" paragraph>
                     For more details, check out the{' '}
-                    <a href="https://github.com/nulltea/zkTripster" target="_blank" rel="noopener">
+                    <Link href="https://github.com/nulltea/zkTripster" target="_blank" rel="noopener">
                         zkTripster GitHub repository
-                    </a>.
+                    </Link>.
                 </Typography>
             </StyledBox>
         </Container>

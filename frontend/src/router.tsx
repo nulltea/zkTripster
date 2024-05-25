@@ -14,7 +14,7 @@ export const router = createBrowserRouter([
                 element: <Home />,
             },
             {
-                path: 'issue',
+                path: 'issue/:contract_address?',
                 element: <IssueForm />,
             },
             {
