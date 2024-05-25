@@ -65,6 +65,9 @@ struct SP1ZkPoExProofFixture {
     key: [u8; 32],
     nonce: [u8; 12],
     round: u64,
+    before: String,
+    after: String,
+    hash_private_inputs: String,
     chacha_cipher: Vec<u8>,
     tlock_cipher: Vec<u8>,
     calldata: String,
@@ -92,6 +95,8 @@ fn main() {
 
     let drand_master_key = info.public_key();
 
+    
+
     let round = {
         let d = args
             .duration
@@ -99,6 +104,15 @@ fn main() {
             .into();
         round_after(&info, d)
     };
+
+    let mut tlock_cipher = vec![];
+    tlock::encrypt(
+        &mut tlock_cipher,
+        &key[..],
+        &drand_master_key,
+        round,
+    )
+    .unwrap();
 
     // Setup the prover client.
     let client = ProverClient::new();
@@ -128,19 +142,34 @@ fn main() {
     )
     .expect("failed to write fixture");
 
-    let (before, after, hash_private_inputs, chacha_cipher, key_hash_str, tlock_cipher, round): (
+    let (before, after, hash_private_inputs, chacha_cipher, _): (
         String,
         String,
         String,
         Vec<u8>,
         String,
-        Vec<u8>,
-        u64,
+        // Vec<u8>,
+        // u64,
     ) = bincode::deserialize(proof.public_values.as_slice())
         .expect("failed to deserialize public values");
 
+    std::fs::write(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("./zkpoex_chacha"),
+        &chacha_cipher,
+    )
+    .expect("failed to write fixture");
+
+    std::fs::write(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("./zkpoex_tlock"),
+        &tlock_cipher,
+    )
+    .expect("failed to write fixture");
+
     // Create the testing fixture so we can test things end-ot-end.
     let fixture = SP1ZkPoExProofFixture {
+        before,
+        after,
+        hash_private_inputs,
         key,
         nonce,
         round,

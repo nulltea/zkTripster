@@ -16,7 +16,7 @@ use sha3::{Digest, Keccak256};
 
 pub fn main() {
     let (key, nonce, calldata, blockchain_settings, drand_master_pk, round) =
-        sp1_zkvm::io::read::<([u8; 32], [u8; 12], String, String, String, u64)>();
+        sp1_zkvm::io::read::<([u8; 32], [u8; 12], String, String, Vec<u8>, u64)>();
 
     let RunEvmResult {
         before,
@@ -31,16 +31,14 @@ pub fn main() {
 
     cipher.apply_keystream(&mut chacha_cipher);
 
-    let drand_master_pk_bytes = hex::decode(drand_master_pk).unwrap();
-
-    let mut tlock_cipher = vec![];
-    tlock::encrypt(
-        &mut tlock_cipher,
-        private_inputs_concat.as_bytes(),
-        &drand_master_pk_bytes,
-        round,
-    )
-    .unwrap();
+    // let mut tlock_cipher = vec![];
+    // tlock::encrypt(
+    //     &mut tlock_cipher,
+    //     &key[..],
+    //     &drand_master_pk,
+    //     round,
+    // )
+    // .unwrap();
 
     let mut hasher = Keccak256::new();
     hasher.update(key);
@@ -54,7 +52,7 @@ pub fn main() {
         hash_private_inputs,
         chacha_cipher,
         key_hash_str,
-        tlock_cipher,
-        round,
+        // tlock_cipher,
+        // round,
     ));
 }
