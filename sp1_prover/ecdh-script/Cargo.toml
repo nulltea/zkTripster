@@ -20,6 +20,8 @@ tracing = "0.1.40"
 alloy-sol-types = "0.7.2"
 hex = { version = "0.4", default-features = false, features = [ "alloc" ]  }
 rand = "*"
+static-dh-ecdh = { git = "https://github.com/nulltea/static-dh-ecdh" }
+
 
 [build-dependencies]
 sp1-helper = { git = "https://github.com/succinctlabs/sp1.git", rev = "277f1b4cfee5129bd40d74748f3d241cdfa56e63" }
