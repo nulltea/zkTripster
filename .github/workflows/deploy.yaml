@@ -2,7 +2,7 @@ name: Frontend Deployment
 
 on:
   push:
-    branches: ['main']
+    branches: [ 'main' ]
   workflow_dispatch:
 
 # Sets the GITHUB_TOKEN permissions to allow deployment to GitHub Pages
@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: 'pages'
-#  group: main-${{ github.workflow }}-${{ github.ref }}
+  #  group: main-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 
@@ -52,6 +52,11 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./frontend/dist
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publish
+        uses: cloudflare/pages-action@1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: zktripster
+          directory: ./frontend/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
