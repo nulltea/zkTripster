@@ -46,12 +46,6 @@ jobs:
       - run: yarn install --immutable
       - name: Build
         run: yarn build
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./frontend/dist
       - name: Publish
         uses: cloudflare/pages-action@1
         with:
