@@ -13,11 +13,13 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@fontsource/roboto": "^5.0.13",
+    "@metamask/providers": "^16.1.0",
     "@mui/icons-material": "^5.15.18",
     "@mui/material": "^5.15.18",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.23.1"
+    "react-router-dom": "^6.23.1",
+    "vite-plugin-fs": "^1.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
@@ -29,6 +31,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "typescript": "^5.2.2",
+    "viem": "^2.12.1",
     "vite": "^5.2.0"
   },
   "packageManager": "yarn@4.2.2"

@@ -10,14 +10,18 @@ import {CssBaseline} from '@mui/material';
 import {ThemeProvider, createTheme} from '@mui/material/styles';
 import {router} from './router.tsx';
 
+// #D63A2B - red
+// #01518B - blue
+// #1AA52C - green
+
 const theme = createTheme({
     palette: {
         mode: 'dark',
         primary: {
-            main: '#1976d2',
+            main: '#01518B',
         },
         secondary: {
-            main: '#dc004e',
+            main: '#D63A2B',
         },
     },
 });
@@ -28,8 +32,8 @@ const root = createRoot(container!);
 root.render(
     <React.StrictMode>
         <ThemeProvider theme={theme}>
-            <CssBaseline />
-                <RouterProvider router={router}/>
+            <CssBaseline/>
+            <RouterProvider router={router}/>
         </ThemeProvider>
     </React.StrictMode>
 );
